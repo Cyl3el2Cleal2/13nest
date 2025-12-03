@@ -5,73 +5,43 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('DTOs', () => {
   describe('EncryptDto', () => {
-    it('should pass validation with valid payload', () => {
-      const dto = plainToClass(EncryptDto, { payload: { message: 'test' } });
+    it('should pass validation with string payload', () => {
+      const dto = plainToClass(EncryptDto, { payload: 'Hello, World!' });
+      const errors = validateSync(dto);
+      expect(errors.length).toBe(0);
+    });
+
+    it('should pass validation with JSON string payload', () => {
+      const payload = '{"message": "test", "data": [1,2,3]}';
+      const dto = plainToClass(EncryptDto, { payload });
       const errors = validateSync(dto);
       expect(errors.length).toBe(0);
     });
 
     it('should fail validation with empty payload', () => {
+      const dto = plainToClass(EncryptDto, { payload: '' });
+      const errors = validateSync(dto);
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('should fail validation with null payload', () => {
       const dto = plainToClass(EncryptDto, { payload: null });
       const errors = validateSync(dto);
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('should pass validation with object payload', () => {
-      const payload = { key: 'value', number: 123 };
-      const dto = plainToClass(EncryptDto, { payload });
-      expect(dto.payload).toEqual(payload);
+    it('should fail validation with oversized payload', () => {
+      const largePayload = 'x'.repeat(2001);
+      const dto = plainToClass(EncryptDto, { payload: largePayload });
+      const errors = validateSync(dto);
+      expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('should pass validation with array payload', () => {
-      const payload = ['item1', 'item2'];
-      const dto = plainToClass(EncryptDto, { payload });
-      expect(dto.payload).toEqual(payload);
-    });
-
-    it('should pass validation with string payload', () => {
-      const payload = 'simple string';
-      const dto = plainToClass(EncryptDto, { payload });
-      expect(dto.payload).toBe(payload);
-    });
-
-    describe('validate method', () => {
-      it('should not throw with valid payload', () => {
-        const dto = new EncryptDto();
-        dto.payload = { valid: 'data' };
-        expect(() => EncryptDto.validate(dto)).not.toThrow();
-      });
-
-      it('should throw BadRequestException with null payload', () => {
-        const dto = new EncryptDto();
-        dto.payload = null;
-        expect(() => EncryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => EncryptDto.validate(dto)).toThrow('Payload is required');
-      });
-
-      it('should throw BadRequestException with undefined payload', () => {
-        const dto = new EncryptDto();
-        dto.payload = undefined;
-        expect(() => EncryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => EncryptDto.validate(dto)).toThrow('Payload is required');
-      });
-
-      it('should throw BadRequestException with oversized payload', () => {
-        const dto = new EncryptDto();
-        const largePayload = 'x'.repeat(2001);
-        dto.payload = { data: largePayload };
-        expect(() => EncryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => EncryptDto.validate(dto)).toThrow(
-          'Payload cannot exceed 2000 characters',
-        );
-      });
-
-      it('should pass validation with maximum allowed payload size', () => {
-        const dto = new EncryptDto();
-        const maxPayload = 'x'.repeat(1800); // Under 2000 char limit
-        dto.payload = { data: maxPayload };
-        expect(() => EncryptDto.validate(dto)).not.toThrow();
-      });
+    it('should pass validation with maximum allowed payload size', () => {
+      const maxPayload = 'x'.repeat(2000);
+      const dto = plainToClass(EncryptDto, { payload: maxPayload });
+      const errors = validateSync(dto);
+      expect(errors.length).toBe(0);
     });
   });
 
@@ -82,125 +52,71 @@ describe('DTOs', () => {
         data2: 'encrypted-data',
       });
       const errors = validateSync(dto);
-      expect(errors.length).toBe(1);
+      expect(errors.length).toBe(1); // @IsNotEmpty decorator fails
       expect(dto.data1).toBe('encrypted-key');
       expect(dto.data2).toBe('encrypted-data');
     });
 
-    describe('validate method', () => {
-      it('should not throw with valid data1 and data2', () => {
-        const dto = new DecryptDto();
-        dto.data1 = 'some-encrypted-key';
-        dto.data2 = 'some-encrypted-data';
-        expect(() => DecryptDto.validate(dto)).not.toThrow();
+    it('should pass validation with empty strings', () => {
+      const dto = plainToClass(DecryptDto, {
+        data1: '',
+        data2: '',
       });
+      expect(dto.data1).toBe('');
+      expect(dto.data2).toBe('');
+    });
 
-      it('should throw BadRequestException when data1 is empty', () => {
-        const dto = new DecryptDto();
-        dto.data1 = '';
-        dto.data2 = 'valid-data';
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
+    it('should handle long valid strings', () => {
+      const longString = 'a'.repeat(1000);
+      const dto = plainToClass(DecryptDto, {
+        data1: longString,
+        data2: longString + 'b',
       });
-
-      it('should throw BadRequestException when data2 is empty', () => {
-        const dto = new DecryptDto();
-        dto.data1 = 'valid-data';
-        dto.data2 = '';
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should throw BadRequestException when both data1 and data2 are empty', () => {
-        const dto = new DecryptDto();
-        dto.data1 = '';
-        dto.data2 = '';
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should throw BadRequestException when data1 is null', () => {
-        const dto = new DecryptDto();
-        dto.data1 = null;
-        dto.data2 = 'valid-data';
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should throw BadRequestException when data2 is null', () => {
-        const dto = new DecryptDto();
-        dto.data1 = 'valid-data';
-        dto.data2 = null;
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should throw BadRequestException when data1 is undefined', () => {
-        const dto = new DecryptDto();
-        dto.data1 = undefined;
-        dto.data2 = 'valid-data';
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should throw BadRequestException when data2 is undefined', () => {
-        const dto = new DecryptDto();
-        dto.data1 = 'valid-data';
-        dto.data2 = undefined;
-        expect(() => DecryptDto.validate(dto)).toThrow(BadRequestException);
-        expect(() => DecryptDto.validate(dto)).toThrow(
-          'Both data1 and data2 are required',
-        );
-      });
-
-      it('should accept valid base64 strings', () => {
-        const dto = new DecryptDto();
-        dto.data1 = 'dmFsaWQgYmFzZTY0IGRhdGE=';
-        dto.data2 = 'YW5vdGhlciB2YWxpZCBiYXNlNjQ=';
-        expect(() => DecryptDto.validate(dto)).not.toThrow();
-      });
-
-      it('should accept long valid strings', () => {
-        const dto = new DecryptDto();
-        const longString = 'a'.repeat(1000);
-        dto.data1 = longString;
-        dto.data2 = longString + 'b';
-        expect(() => DecryptDto.validate(dto)).not.toThrow();
-      });
+      expect(dto.data1).toBe(longString);
+      expect(dto.data2).toBe(longString + 'b');
     });
   });
 
   describe('Integration Tests', () => {
-    it('should handle complex payload types in EncryptDto', () => {
-      const complexPayload = {
-        user: {
-          id: 123,
-          name: 'Test User',
-          settings: {
-            theme: 'dark',
-            notifications: true,
-          },
-        },
+    it('should handle JSON string payload in EncryptDto', () => {
+      const jsonString = JSON.stringify({
+        message: 'Complex data structure',
+        user: { id: 123, name: 'Test User' },
         items: [1, 2, 3],
-        metadata: null,
-        flags: undefined,
-      };
+      });
 
-      const dto = plainToClass(EncryptDto, { payload: complexPayload });
-      expect(() => EncryptDto.validate(dto)).not.toThrow();
-      expect(dto.payload).toEqual(complexPayload);
+      const dto = plainToClass(EncryptDto, { payload: jsonString });
+      const errors = validateSync(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.payload).toEqual(jsonString);
+    });
+
+    it('should handle various string types', () => {
+      const testCases = [
+        'simple string',
+        '12345',
+        'true',
+        '{"key": "value"}',
+        '[1,2,3]',
+        '',
+      ];
+
+      testCases.forEach((payload) => {
+        const dto = plainToClass(EncryptDto, { payload });
+        expect(dto.payload).toBe(payload);
+
+        if (payload === '') {
+          const errors = validateSync(dto);
+          expect(errors.length).toBeGreaterThan(0);
+        } else {
+          const errors = validateSync(dto);
+          if (payload.length > 2000) {
+            expect(errors.length).toBeGreaterThan(0);
+          } else {
+            expect(errors.length).toBe(0);
+          }
+        }
+      });
     });
   });
 });

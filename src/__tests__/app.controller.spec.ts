@@ -53,7 +53,7 @@ describe('AppController', () => {
   });
 
   describe('encryptData', () => {
-    const mockPayload = { message: 'test data' };
+    const mockPayload = 'Hello, World!';
     const mockBody = { payload: mockPayload };
     const mockSuccessResponse = {
       data: { data1: 'encrypted-key', data2: 'encrypted-data' },

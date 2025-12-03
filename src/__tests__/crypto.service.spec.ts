@@ -99,7 +99,7 @@ LwIDAQAB
 
   describe('Main Operations', () => {
     it('should encrypt and decrypt payload correctly', () => {
-      const payload = { message: 'test data' };
+      const payload = 'Hello, World!';
       const encrypted = service.encryptPayload(payload);
       const decrypted = service.decryptPayload(
         encrypted.data1,
@@ -108,8 +108,8 @@ LwIDAQAB
       expect(decrypted).toEqual(payload);
     });
 
-    it('should handle string payload', () => {
-      const payload = 'Simple string message';
+    it('should handle JSON string payload', () => {
+      const payload = '{"message":"test","data":[1,2,3]}';
       const encrypted = service.encryptPayload(payload);
       const decrypted = service.decryptPayload(
         encrypted.data1,
@@ -118,14 +118,14 @@ LwIDAQAB
       expect(decrypted).toBe(payload);
     });
 
-    it('should handle array payload', () => {
-      const payload = ['item1', 'item2', { nested: 'value' }];
+    it('should handle numeric string payload', () => {
+      const payload = '12345';
       const encrypted = service.encryptPayload(payload);
       const decrypted = service.decryptPayload(
         encrypted.data1,
         encrypted.data2,
       );
-      expect(decrypted).toEqual(payload);
+      expect(decrypted).toBe(payload);
     });
 
     it('should handle null payload gracefully', () => {
@@ -142,7 +142,7 @@ LwIDAQAB
     });
 
     it('should produce different encrypted results for same payload', () => {
-      const payload = { message: 'test' };
+      const payload = 'test message';
       const encrypted1 = service.encryptPayload(payload);
       const encrypted2 = service.encryptPayload(payload);
       expect(encrypted1.data1).not.toBe(encrypted2.data1);

@@ -37,7 +37,7 @@ describe('AppService', () => {
   });
 
   describe('encrypt', () => {
-    const mockPayload = { message: 'test data' };
+    const mockPayload = 'Hello, World!';
     const mockEncryptedData = {
       data1: 'encrypted-aes-key',
       data2: 'encrypted-payload',
@@ -74,7 +74,7 @@ describe('AppService', () => {
   describe('decrypt', () => {
     const mockData1 = 'encrypted-aes-key';
     const mockData2 = 'encrypted-payload';
-    const mockDecryptedData = { message: 'decrypted data' };
+    const mockDecryptedData = 'decrypted data string';
 
     it('should return successful decryption response', () => {
       mockCryptoService.decryptPayload.mockReturnValue(mockDecryptedData);
