@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CryptoService } from './crypto.service';
-import { EncryptDto, EncryptResponseDto, DecryptDto } from './app.dto';
+import { EncryptDto, EncryptResponseDto, DecryptDto, DecryptResponseDto } from './app.dto';
 
 @Injectable()
 export class AppService {
@@ -11,10 +11,20 @@ export class AppService {
   }
 
   encrypt(payload: any): EncryptResponseDto {
-    return this.cryptoService.encryptPayload(payload);
+    const data = this.cryptoService.encryptPayload(payload);
+    return {
+      data,
+      error_code: "",
+      successful: true
+    }
   }
 
-  decrypt(data1: string, data2: string): any {
-    return this.cryptoService.decryptPayload(data1, data2);
+  decrypt(data1: string, data2: string): DecryptResponseDto {
+    const data = this.cryptoService.decryptPayload(data1, data2);
+    return {
+      data,
+      error_code: "",
+      successful: true
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { DecryptDto, EncryptDto, EncryptResponseDto } from './app.dto';
+import { DecryptDto, DecryptResponseDto, EncryptDto, EncryptResponseDto } from './app.dto';
 
 @Controller()
 export class AppController {
@@ -17,7 +17,7 @@ export class AppController {
   }
 
   @Post('/get-decrypt-data')
-  decryptData(@Body() body: DecryptDto): any {
+  decryptData(@Body() body: DecryptDto): DecryptResponseDto {
     return this.appService.decrypt(body.data1, body.data2);
   }
 }
