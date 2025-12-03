@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsObject, MaxLength, validateSync } from 'class-validator';
+import { BadRequestException } from '@nestjs/common';
 
 export class EncryptDto {
   @IsNotEmpty()
@@ -6,19 +7,22 @@ export class EncryptDto {
   payload: any;
 
   static validate(dto: EncryptDto) {
+    if (!dto.payload) {
+      throw new BadRequestException('Payload is required');
+    }
     const payloadString = JSON.stringify(dto.payload);
 
     if (payloadString.length === 0) {
-      throw new Error('Payload cannot be empty');
+      throw new BadRequestException('Payload cannot be empty');
     }
 
     if (payloadString.length > 2000) {
-      throw new Error('Payload cannot exceed 2000 characters');
+      throw new BadRequestException('Payload cannot exceed 2000 characters');
     }
 
     const errors = validateSync(dto);
     if (errors.length > 0) {
-      throw new Error(
+      throw new BadRequestException(
         errors.map((e) => Object.values(e.constraints || {})).join(', '),
       );
     }
@@ -39,6 +43,12 @@ export class EncryptResponseDto extends BaseResponse {
 export class DecryptDto {
   data1: string;
   data2: string;
+
+  static validate(dto: DecryptDto) {
+    if (!dto.data1 || !dto.data2) {
+      throw new BadRequestException('Both data1 and data2 are required');
+    }
+  }
 }
 
 export class DecryptResponseDto extends BaseResponse {
